@@ -1,0 +1,16 @@
+{
+  "name": "Antigravity Planner",
+  "short_name": "Planner",
+  "description": "Sprint planlama ve efor tahmin uygulaması",
+  "start_url": "./planlayici.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

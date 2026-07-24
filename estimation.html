@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Efor Tahmini - PWA</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <meta name="theme-color" content="#ffffff">
+    <style>
+        /* Import the same font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+            gap: 20px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .nav-link {
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0f172a;
+            background-color: #f1f5f9;
+        }
+
+        .content-area {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            box-sizing: border-box;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-section h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #0f172a;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+        }
+
+        .btn {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn:hover { background-color: #2563eb; }
+        .btn-danger { background-color: #ffffff; color: #ef4444; border: 1px solid #ef4444; }
+        .btn-danger:hover { background-color: #fef2f2; }
+
+        .table-container {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            overflow-x: auto;
+            flex: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .task-cell {
+            min-width: 150px;
+            max-width: 250px;
+            text-align: left;
+        }
+        .task-content img {
+            max-width: 100%;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .task-content textarea {
+            width: 100%;
+            min-height: 50px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 6px;
+            font-family: inherit;
+            font-size: 13px;
+            resize: vertical;
+            color: #1e293b;
+        }
+
+        .phase-cell {
+            min-width: 120px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .input-group > div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-group input {
+            width: 55px;
+            padding: 8px 4px 8px 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            color: #0f172a;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .input-group input:hover {
+            border-color: #94a3b8;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+            background-color: #f8fafc;
+        }
+
+        .input-label {
+            font-size: 11px;
+            color: #64748b;
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .total-cell {
+            font-weight: 700;
+            min-width: 140px;
+            background-color: #f8fafc;
+        }
+        
+        .effort-badge {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 110px;
+            margin: 0 auto 4px auto;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-weight: 700;
+            align-items: center;
+        }
+        .effort-badge:last-child { margin-bottom: 0; }
+        .badge-est { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .badge-act { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .badge-diff { background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .badge-diff.negative { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .badge-label { font-weight: 600; opacity: 0.8; font-size: 10px; text-transform: uppercase;}
+        
+        .phase-total-badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            margin: 1px;
+        }
+        .pt-est { background-color: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; }
+        .pt-act { background-color: #ecfdf5; color: #10b981; border: 1px solid #a7f3d0; }
+
+        .footer-row {
+            font-weight: 800;
+            background-color: #f1f5f9;
+        }
+        .footer-row td {
+            font-size: 14px;
+        }
+
+        .action-cell button {
+            background: transparent;
+            color: #ef4444;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 6px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .action-cell button:hover {
+            background: #fee2e2;
+        }
+        
+        /* FOOTER / COPYRIGHT */
+        .footer {
+            margin-top: auto; 
+            text-align: right;
+            padding: 15px 20px;
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="planlayici.html" class="nav-link">Sprint Planlama</a>
+        <a href="estimation.html" class="nav-link active">Efor Tahmini</a>
+    </div>
+
+    <div class="content-area">
+        <div class="header-section">
+            <h2>Efor Tahmin Tablosu</h2>
+            <div>
+                <button class="btn" onclick="addTextRow()">+ Metin Maddesi Ekle</button>
+                <button class="btn btn-danger" onclick="clearAllData()">🗑️ Tümünü Temizle</button>
+            </div>
+        </div>
+        
+        <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 15px; font-weight: 500;">
+            <b>İpucu:</b> Sayfada bir yere tıklayın ve ekran görüntüsü yapıştırmak için <b>Ctrl+V</b> tuşlarına basın. Her aşama için sol kutu Tahmini (Est), sağ kutu Gerçekleşen (Act) saattir.
+        </p>
+
+        <div class="table-container">
+            <table id="estimationTable">
+                <thead>
+                    <tr>
+                        <th style="width:40px;">İşlem</th>
+                        <th>Madde (Task)</th>
+                        <th>Development</th>
+                        <th>Pre-Test</th>
+                        <th>Review</th>
+                        <th>Rev. Revision</th>
+                        <th>Test</th>
+                        <th>Test Revision</th>
+                        <th>Merge Plan</th>
+                        <th>Merge Revision</th>
+                        <th>Total Effort</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Satırlar JS ile buraya eklenecek -->
+                </tbody>
+                <tfoot>
+                    <tr class="footer-row" id="footerRow">
+                        <td colspan="2" style="text-align: right;">Genel Toplam:</td>
+                        <td id="gt-dev">-</td>
+                        <td id="gt-pretest">-</td>
+                        <td id="gt-review">-</td>
+                        <td id="gt-revrev">-</td>
+                        <td id="gt-test">-</td>
+                        <td id="gt-testrev">-</td>
+                        <td id="gt-merge">-</td>
+                        <td id="gt-mergerev">-</td>
+                        <td id="gt-total">-</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    
+    <div class="footer">
+        &copy; 2026 KYazılım - Sürüm v1.13
+    </div>
+
+    <script>
+        const phases = [
+            'dev', 'pretest', 'review', 'revrev', 'test', 'testrev', 'merge', 'mergerev'
+        ];
+        let rowData = [];
+
+        function init() {
+            loadData();
+            window.addEventListener('paste', handlePaste);
+            renderTable();
+        }
+
+        function handlePaste(e) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file') {
+                    const blob = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        compressImage(event.target.result, 600, function(compressedDataUrl) {
+                            addRow('image', compressedDataUrl);
+                        });
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            }
+        }
+        
+        function compressImage(base64Str, maxWidth = 800, callback) {
+            let img = new Image();
+            img.src = base64Str;
+            img.onload = () => {
+                let canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                let ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                callback(canvas.toDataURL('image/jpeg', 0.8));
+            };
+        }
+
+        function addTextRow() {
+            addRow('text', '');
+        }
+
+        function addRow(type, content) {
+            const newRow = {
+                id: 'row_' + Date.now(),
+                type: type,
+                content: content,
+                estimates: {},
+                actuals: {}
+            };
+            phases.forEach(p => {
+                newRow.estimates[p] = '';
+                newRow.actuals[p] = '';
+            });
+            rowData.push(newRow);
+            saveData();
+            renderTable();
+        }
+
+        function deleteRow(id) {
+            if(confirm('Bu maddeyi silmek istediğinize emin misiniz?')) {
+                rowData = rowData.filter(r => r.id !== id);
+                saveData();
+                renderTable();
+            }
+        }
+
+        function updateTextContent(id, value) {
+            const row = rowData.find(r => r.id === id);
+            if(row && row.type === 'text') {
+                row.content = value;
+                saveData();
+            }
+        }
+
+        function updateValue(id, phase, type, value) {
+            const row = rowData.find(r => r.id === id);
+            if(row) {
+                if(type === 'est') row.estimates[phase] = value;
+                else row.actuals[phase] = value;
+                saveData();
+                renderTable(); // Re-render for calculations
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            let grandTotals = { est: 0, act: 0 };
+            let phaseTotals = {};
+            phases.forEach(p => phaseTotals[p] = {est: 0, act: 0});
+
+            rowData.forEach(row => {
+                const tr = document.createElement('tr');
+                
+                // Action cell
+                let html = `<td class="action-cell"><button onclick="deleteRow('${row.id}')" title="Sil">✖</button></td>`;
+                
+                // Task cell
+                let taskHtml = '';
+                if(row.type === 'image') {
+                    taskHtml = `<img src="${row.content}" alt="Task Image"/>`;
+                } else {
+                    taskHtml = `<textarea placeholder="Madde detayını girin..." onchange="updateTextContent('${row.id}', this.value)">${row.content}</textarea>`;
+                }
+                html += `<td class="task-cell"><div class="task-content">${taskHtml}</div></td>`;
+                
+                // Phase cells
+                let rowEstTotal = 0;
+                let rowActTotal = 0;
+
+                phases.forEach(p => {
+                    const estVal = row.estimates[p] || '';
+                    const actVal = row.actuals[p] || '';
+                    
+                    rowEstTotal += parseFloat(estVal) || 0;
+                    rowActTotal += parseFloat(actVal) || 0;
+                    
+                    phaseTotals[p].est += parseFloat(estVal) || 0;
+                    phaseTotals[p].act += parseFloat(actVal) || 0;
+
+                    html += `
+                    <td class="phase-cell">
+                        <div class="input-group">
+                            <div>
+                                <span class="input-label">Est.</span>
+                                <input type="number" step="0.5" min="0" value="${estVal}" onchange="updateValue('${row.id}', '${p}', 'est', this.value)" />
+                            </div>
+                            <div>
+                                <span class="input-label">Act.</span>
+                                <input type="number" step="0.5" min="0" value="${actVal}" onchange="updateValue('${row.id}', '${p}', 'act', this.value)" />
+                            </div>
+                        </div>
+                    </td>`;
+                });
+
+                // Total cell
+                const diff = rowActTotal - rowEstTotal;
+                const diffClass = diff > 0 ? 'diff negative' : 'diff';
+                const diffSign = diff > 0 ? '+' : '';
+                
+                grandTotals.est += rowEstTotal;
+                grandTotals.act += rowActTotal;
+
+                html += `
+                <td class="total-cell">
+                    <div class="effort-badge badge-est">
+                        <span class="badge-label">Tahmin</span>
+                        <span>${rowEstTotal.toFixed(1)}</span>
+                    </div>
+                    <div class="effort-badge badge-act">
+                        <span class="badge-label">Gerçekleşen</span>
+                        <span>${rowActTotal.toFixed(1)}</span>
+                    </div>
+                    <div class="effort-badge badge-diff ${diff > 0 ? 'negative' : ''}">
+                        <span class="badge-label">Fark</span>
+                        <span>${diffSign}${diff.toFixed(1)}</span>
+                    </div>
+                </td>`;
+                
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+            });
+
+            // Update footer
+            phases.forEach(p => {
+                const td = document.getElementById(`gt-${p}`);
+                td.innerHTML = `
+                    <div class="phase-total-badge pt-est" title="Tahmini">${phaseTotals[p].est.toFixed(1)}</div>
+                    <div class="phase-total-badge pt-act" title="Gerçekleşen">${phaseTotals[p].act.toFixed(1)}</div>
+                `;
+            });
+            
+            const gDiff = grandTotals.act - grandTotals.est;
+            const gDiffSign = gDiff > 0 ? '+' : '';
+            document.getElementById('gt-total').innerHTML = `
+                <div class="effort-badge badge-est">
+                    <span class="badge-label">T.Tahmin</span>
+                    <span>${grandTotals.est.toFixed(1)}</span>
+                </div>
+                <div class="effort-badge badge-act">
+                    <span class="badge-label">T.Gerçek</span>
+                    <span>${grandTotals.act.toFixed(1)}</span>
+                </div>
+                <div class="effort-badge badge-diff ${gDiff > 0 ? 'negative' : ''}">
+                    <span class="badge-label">G.Fark</span>
+                    <span>${gDiffSign}${gDiff.toFixed(1)}</span>
+                </div>
+            `;
+        }
+
+        function saveData() {
+            localStorage.setItem('estimation_board_v1', JSON.stringify(rowData));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('estimation_board_v1');
+            if(saved) {
+                rowData = JSON.parse(saved);
+            }
+        }
+
+        function clearAllData() {
+            if(confirm("Tüm efor tahmin tablosunu temizlemek üzeresiniz! Onaylıyor musunuz?")) {
+                rowData = [];
+                saveData();
+                renderTable();
+            }
+        }
+
+        window.onload = init;
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                .then(registration => console.log('SW registered'))
+                .catch(err => console.log('SW failed', err));
+            });
+        }
+    </script>
+</body>
+</html>

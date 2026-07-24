@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firdevs Sprint Planlama</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <meta name="theme-color" content="#ffffff">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+            gap: 20px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .nav-link {
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .nav-link:hover {
+            color: #0f172a;
+            background-color: #f1f5f9;
+        }
+        .nav-link.active {
+            color: #0f172a;
+            background-color: #f1f5f9;
+        }
+
+        /* MAIN CONTENT AREA */
+        .content-area {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            box-sizing: border-box;
+        }
+        
+        /* HEADER */
+        .header-info {
+            background-color: #ffffff; 
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            margin-bottom: 24px;
+            text-align: center;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.5s ease; 
+            position: relative; 
+        }
+        .main-title {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #0f172a;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+        }
+        
+        /* TÜMÜNÜ TEMİZLE BUTONU */
+        .global-clear-btn {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ffffff;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .global-clear-btn:hover {
+            background: #fef2f2;
+            box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
+        }
+
+        /* PROGRESS BAR */
+        .progress-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 450px;
+        }
+        .progress-bg {
+            flex: 1;
+            height: 12px;
+            background: #f1f5f9;
+            border-radius: 9999px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .progress-text {
+            font-weight: 700;
+            color: #059669;
+            font-size: 14px;
+            min-width: 75px;
+            text-align: left;
+        }
+
+        .instructions {
+            color: #64748b;
+            font-size: 13px;
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        /* KOLON DÜZENİ */
+        .day-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center; 
+            gap: 24px;
+            flex: 1;
+            padding-bottom: 20px;
+        }
+        
+        /* KOLON TASARIMI */
+        .day-column {
+            background: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            min-height: 250px; 
+            width: calc(20% - 24px); 
+            min-width: 260px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .day-column.active {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* GÜN BAŞLIKLARI VE GÜN TEMİZLE BUTONU */
+        .day-header {
+            background-color: #f8fafc;
+            padding: 14px;
+            text-align: center;
+            font-weight: 700; 
+            font-size: 15px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em; 
+            color: #334155;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 1px solid #e2e8f0; 
+            position: relative; 
+            transition: background-color 0.2s ease;
+        }
+        .day-column.active .day-header {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            border-bottom-color: #bfdbfe;
+        }
+
+        .clear-day-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ffffff;
+            color: #ef4444;
+            border: 1px solid #fca5a5;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            opacity: 0; 
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+        .clear-day-btn:hover {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+        .day-header:hover .clear-day-btn {
+            opacity: 1; 
+        }
+        
+        .task-list.drag-over {
+            background-color: #f8fafc;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            padding: 16px;
+            gap: 16px;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 100px;
+            transition: background-color 0.2s ease;
+        }
+        
+        /* GÖREV KARTLARI */
+        .task-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 6px; 
+            width: calc(50% - 8px); 
+            box-sizing: border-box;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            cursor: grab;
+        }
+        .task-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+        }
+        .task-card:active {
+            cursor: grabbing;
+        }
+        .task-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+            border: 2px dashed #3b82f6;
+        }
+
+        .image-wrapper {
+            position: relative;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #f8fafc;
+            line-height: 0; 
+            flex: 1;
+            display: flex;
+            border: 1px solid #f1f5f9;
+        }
+        .task-card img {
+            display: block;
+            width: 100%;
+            height: auto;
+            object-fit: contain; 
+            transition: all 0.3s ease;
+            pointer-events: none; 
+        }
+
+        /* Tamamlandı Maskesi */
+        .done-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .done-overlay::after {
+            content: '✓';
+            font-size: 48px;
+            color: #10b981;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transform: scale(0.5);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .task-card.completed img {
+            filter: grayscale(100%);
+            opacity: 0.6;
+        }
+        .task-card.completed .done-overlay {
+            opacity: 1;
+        }
+        .task-card.completed .done-overlay::after {
+            transform: scale(1);
+        }
+
+        .tags-container {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            display: flex;
+            gap: 6px;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .tag {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            line-height: 1;
+            font-weight: 700;
+            color: white;
+            display: none; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .tag.merge-plan { background-color: #3b82f6; display: block; }
+        .tag.review { background-color: #10b981; display: block; }
+        .tag.test { background-color: #f59e0b; display: block; }
+
+        /* Butonlar */
+        .action-btn {
+            position: absolute;
+            top: 8px;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.2s ease;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .delete-btn { right: 8px; background: #ef4444; }
+        .delete-btn:hover { background: #dc2626; transform: scale(1.05); }
+        
+        .duplicate-btn { right: 42px; background: #3b82f6; font-size: 14px; }
+        .duplicate-btn:hover { background: #2563eb; transform: scale(1.05); }
+        
+        .done-btn { left: 8px; background: #10b981; font-weight: bold; }
+        .done-btn:hover { background: #059669; transform: scale(1.05); }
+        .task-card.completed .done-btn { background: #64748b; }
+
+        .controls {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            opacity: 0;
+            z-index: 10;
+            transition: opacity 0.2s;
+        }
+        .controls button {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #e2e8f0;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            cursor: pointer;
+            color: #475569;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+        .controls button:hover {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+
+        .task-card:hover .action-btn,
+        .task-card:hover .controls {
+            opacity: 1;
+        }
+        
+        /* FOOTER / COPYRIGHT */
+        .footer {
+            margin-top: auto; 
+            text-align: right;
+            padding: 15px 20px;
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="planlayici.html" class="nav-link active">Sprint Planlama</a>
+        <a href="estimation.html" class="nav-link">Efor Tahmini</a>
+    </div>
+
+    <div class="content-area">
+        <div class="header-info" id="main-header">
+        <button class="global-clear-btn" onclick="clearAllBoard()" title="Yeni bir sprint haftasına başlamak için tahtayı temizle">
+            <span>🗑️</span> Sprinti Temizle
+        </button>
+
+        <h2 class="main-title">Firdevs Sprint Planlama</h2>
+        
+        <div class="progress-wrapper">
+            <div class="progress-bg">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <span class="progress-text" id="progress-text">%0 Done</span>
+        </div>
+
+        <p class="instructions">
+            <b>Kullanım:</b> Aktif güne tıklayın, <b>Ctrl + V</b> ile resmi yapıştırın. Kartları sürükleyip bırakabilirsiniz.
+        </p>
+    </div>
+
+    <div class="day-container" id="planner-board">
+        <!-- Günler buraya yüklenecek -->
+    </div>
+
+    <!-- COPYRIGHT ALANI -->
+    <div class="footer">
+        &copy; 2026 KYazılım - Sürüm v1.13
+    </div>
+    </div> <!-- end content-area -->
+
+    <script>
+        const days = ["Cumartesi", "Pazartesi", "Salı", "Çarşamba", "Perşembe"];
+        let activeDayId = null;
+        let draggedCard = null;
+
+        function init() {
+            const board = document.getElementById('planner-board');
+            
+            days.forEach(day => {
+                const dayId = day.toLowerCase().replace("ç", "c").replace("ş", "s");
+                const dayEl = document.createElement('div');
+                dayEl.className = 'day-column';
+                dayEl.id = `col-${dayId}`;
+                
+                dayEl.innerHTML = `
+                    <div class="day-header" onclick="setActiveDay('${dayId}')">
+                        ${day}
+                        <button class="clear-day-btn" onclick="clearDay('${dayId}', event)" title="${day} gününü temizle">Temizle</button>
+                    </div>
+                    <div class="task-list" id="list-${dayId}"></div>
+                `;
+                board.appendChild(dayEl);
+
+                const listEl = document.getElementById(`list-${dayId}`);
+                
+                listEl.addEventListener('dragover', e => {
+                    e.preventDefault(); 
+                    listEl.classList.add('drag-over');
+                });
+                
+                listEl.addEventListener('dragleave', () => {
+                    listEl.classList.remove('drag-over');
+                });
+                
+                listEl.addEventListener('drop', e => {
+                    e.preventDefault();
+                    listEl.classList.remove('drag-over');
+                    if (draggedCard) {
+                        listEl.appendChild(draggedCard); 
+                        saveData(); 
+                        updateProgressBar(); 
+                    }
+                });
+            });
+
+            setActiveDay('cumartesi');
+            loadData();
+            window.addEventListener('paste', handlePaste);
+        }
+
+        function updateProgressBar() {
+            const totalTasks = document.querySelectorAll('.task-card').length;
+            const completedTasks = document.querySelectorAll('.task-card.completed').length;
+            
+            let percentage = 0;
+            if (totalTasks > 0) {
+                percentage = Math.round((completedTasks / totalTasks) * 100);
+            }
+
+            document.getElementById('progress-fill').style.width = percentage + '%';
+            document.getElementById('progress-text').innerText = '%' + percentage + ' Done';
+
+            const r = Math.round(255 - (255 - 212) * (percentage / 100));
+            const g = Math.round(255 - (255 - 237) * (percentage / 100));
+            const b = Math.round(255 - (255 - 218) * (percentage / 100));
+            
+            document.getElementById('main-header').style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function setActiveDay(dayId) {
+            document.querySelectorAll('.day-column').forEach(col => col.classList.remove('active'));
+            document.getElementById(`col-${dayId}`).classList.add('active');
+            activeDayId = dayId;
+        }
+
+        function clearDay(dayId, event) {
+            event.stopPropagation(); 
+            
+            const dayName = document.getElementById(`col-${dayId}`).querySelector('.day-header').childNodes[0].nodeValue.trim();
+            
+            if(confirm(`${dayName} günündeki tüm görevleri temizlemek istediğinize emin misiniz?`)) {
+                const list = document.getElementById(`list-${dayId}`);
+                list.innerHTML = ''; 
+                saveData();
+                updateProgressBar();
+            }
+        }
+
+        function clearAllBoard() {
+            if(confirm("DİKKAT: Tüm haftalık sprint tahtasını temizlemek üzeresiniz! Bütün görevler silinecek. Onaylıyor musunuz?")) {
+                days.forEach(day => {
+                    const dayId = day.toLowerCase().replace("ç", "c").replace("ş", "s");
+                    const list = document.getElementById(`list-${dayId}`);
+                    if(list) list.innerHTML = '';
+                });
+                saveData();
+                updateProgressBar();
+            }
+        }
+        
+        function handlePaste(e) {
+            if (!activeDayId) return;
+
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file') {
+                    const blob = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        compressImage(event.target.result, 800, function(compressedDataUrl) {
+                            createTaskCard(activeDayId, compressedDataUrl, [], false);
+                            saveData();
+                            updateProgressBar(); 
+                        });
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            }
+        }
+
+        function createTaskCard(dayId, imgSrc, activeTags, isCompleted) {
+            const list = document.getElementById(`list-${dayId}`);
+            if(!list) return;
+
+            const card = document.createElement('div');
+            
+            const completedClass = isCompleted ? 'completed' : '';
+            card.className = `task-card ${completedClass}`;
+            
+            card.setAttribute('draggable', 'true');
+            
+            const cardId = 'task_' + Date.now() + Math.floor(Math.random() * 1000);
+            card.id = cardId;
+
+            card.addEventListener('dragstart', function(e) {
+                draggedCard = this;
+                setTimeout(() => this.classList.add('dragging'), 0);
+            });
+            
+            card.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+                draggedCard = null;
+            });
+
+            const isMerge = activeTags.includes('merge-plan') ? 'merge-plan' : '';
+            const isReview = activeTags.includes('review') ? 'review' : '';
+            const isTest = activeTags.includes('test') ? 'test' : '';
+
+            card.innerHTML = `
+                <button class="action-btn done-btn" onclick="toggleComplete('${cardId}')" title="Tamamlandı İşaretle/Kaldır">✔</button>
+                <button class="action-btn duplicate-btn" onclick="duplicateCard('${cardId}')" title="Görevi Çoğalt">📋</button>
+                <button class="action-btn delete-btn" onclick="deleteCard('${cardId}')" title="Görevi Sil">✖</button>
+                
+                <div class="image-wrapper">
+                    <img src="${imgSrc}" alt="Task Image" />
+                    
+                    <div class="tags-container">
+                        <span class="tag ${isMerge}" id="tag-merge-${cardId}">Merge Plan</span>
+                        <span class="tag ${isReview}" id="tag-review-${cardId}">Review</span>
+                        <span class="tag ${isTest}" id="tag-test-${cardId}">Test</span>
+                    </div>
+
+                    <div class="done-overlay"></div>
+
+                    <div class="controls">
+                        <button onclick="toggleTag('${cardId}', 'merge-plan')">+ Merge Plan</button>
+                        <button onclick="toggleTag('${cardId}', 'review')">+ Review</button>
+                        <button onclick="toggleTag('${cardId}', 'test')">+ Test</button>
+                    </div>
+                </div>
+            `;
+            list.appendChild(card);
+            
+            if(!isCompleted) {
+                list.scrollTop = list.scrollHeight;
+            }
+        }
+
+        function duplicateCard(cardId) {
+            const card = document.getElementById(cardId);
+            if(!card) return;
+            
+            const list = card.closest('.task-list');
+            const dayId = list.id.replace('list-', '');
+            const imgSrc = card.querySelector('img').src;
+            
+            createTaskCard(dayId, imgSrc, [], false);
+            
+            saveData();
+            updateProgressBar();
+        }
+
+        function toggleComplete(cardId) {
+            const card = document.getElementById(cardId);
+            card.classList.toggle('completed');
+            saveData();
+            updateProgressBar(); 
+        }
+
+        function toggleTag(cardId, tagType) {
+            const tagId = `tag-${tagType.split('-')[0]}-${cardId}`;
+            const tagEl = document.getElementById(tagId);
+            
+            if (tagEl.classList.contains(tagType)) {
+                tagEl.classList.remove(tagType);
+            } else {
+                tagEl.classList.add(tagType);
+            }
+            saveData();
+        }
+
+        function deleteCard(cardId) {
+            if(confirm("Bu görevi silmek istediğinize emin misiniz?")) {
+                document.getElementById(cardId).remove();
+                saveData();
+                updateProgressBar(); 
+            }
+        }
+
+        function saveData() {
+            const data = {};
+            days.forEach(day => {
+                const dayId = day.toLowerCase().replace("ç", "c").replace("ş", "s");
+                const cards = document.getElementById(`list-${dayId}`).querySelectorAll('.task-card');
+                data[dayId] = [];
+                
+                cards.forEach(card => {
+                    const imgSrc = card.querySelector('img').src;
+                    const isCompleted = card.classList.contains('completed');
+                    const tags = [];
+                    if (card.querySelector('.tags-container span:nth-child(1)').classList.contains('merge-plan')) tags.push('merge-plan');
+                    if (card.querySelector('.tags-container span:nth-child(2)').classList.contains('review')) tags.push('review');
+                    if (card.querySelector('.tags-container span:nth-child(3)').classList.contains('test')) tags.push('test');
+                    
+                    data[dayId].push({ image: imgSrc, tags: tags, completed: isCompleted });
+                });
+            });
+            localStorage.setItem('haftalik_plan_kanban_v13', JSON.stringify(data));
+        }
+
+        function loadData() {
+            let saved = localStorage.getItem('haftalik_plan_kanban_v13');
+            if(!saved) {
+                saved = localStorage.getItem('haftalik_plan_kanban_v12'); 
+            }
+
+            if (saved) {
+                const data = JSON.parse(saved);
+                days.forEach(day => {
+                    const dayId = day.toLowerCase().replace("ç", "c").replace("ş", "s");
+                    if (data[dayId]) {
+                        data[dayId].forEach(task => {
+                            createTaskCard(dayId, task.image, task.tags, task.completed || false);
+                        });
+                    }
+                });
+            }
+            
+            updateProgressBar();
+        }
+
+        function compressImage(base64Str, maxWidth = 800, callback) {
+            let img = new Image();
+            img.src = base64Str;
+            img.onload = () => {
+                let canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                let ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                callback(canvas.toDataURL('image/jpeg', 0.8));
+            };
+        }
+
+        window.onload = init;
+        
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                .then(registration => {
+                    console.log('SW registered: ', registration);
+                })
+                .catch(registrationError => {
+                    console.log('SW registration failed: ', registrationError);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
