@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dökümantasyon - Netefor PWA</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <script src="config.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:wght@300;400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fafafa;
+            color: #334155;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            line-height: 1.7;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+            gap: 20px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-link {
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0f172a;
+            background-color: #f1f5f9;
+        }
+
+        /* DOC CONTENT */
+        .doc-container {
+            flex: 1;
+            max-width: 800px;
+            width: 100%;
+            margin: 40px auto;
+            padding: 40px;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+        }
+
+        .doc-header {
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .doc-header h1 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 2.2rem;
+            color: #0f172a;
+            margin: 0 0 10px 0;
+            letter-spacing: -0.025em;
+        }
+
+        .doc-header p {
+            font-size: 1.1rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .doc-section {
+            margin-bottom: 40px;
+        }
+
+        .doc-section h2 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #1e293b;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .doc-section h3 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #334155;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        .doc-section p {
+            font-family: 'Merriweather', serif; /* Reading mode font */
+            font-size: 1.05rem;
+            color: #475569;
+            margin-bottom: 15px;
+        }
+
+        .doc-section ul {
+            font-family: 'Merriweather', serif;
+            font-size: 1.05rem;
+            color: #475569;
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .doc-section li {
+            margin-bottom: 8px;
+        }
+
+        .highlight-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .highlight-box p {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            color: #1e293b;
+        }
+
+        /* FOOTER (Injected by config.js) */
+        .footer { }
+        
+        @media (max-width: 768px) {
+            .doc-container {
+                margin: 20px;
+                padding: 20px;
+                width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="planlayici.html" class="nav-link">Sprint Planlama</a>
+        <a href="estimation.html" class="nav-link">Efor Tahmini</a>
+        <a href="raporlar.html" class="nav-link">Raporlar</a>
+    </div>
+
+    <div class="doc-container">
+        <div class="doc-header">
+            <h1>Sistem Dökümantasyonu</h1>
+            <p>Netefor PWA v3.3 Mimari ve Kullanım Kılavuzu</p>
+        </div>
+
+        <div class="doc-section">
+            <h2>Sistem Mimarisi ve Amaç</h2>
+            <p>Netefor Sprint Planlayıcı, yerel tarayıcı yeteneklerini kullanarak tamamen istemci tarafında (Client-Side) çalışan, sunucusuz bir Progresif Web Uygulamasıdır (PWA). Modern yazılım geliştirme süreçlerindeki efor tahminleme, sprint planlama ve raporlama ihtiyaçlarını karşılamak üzere tasarlanmıştır.</p>
+            <p>Uygulama, verilerini IndexedDB ve LocalStorage üzerinde şifresiz olarak tutar. Çevrimdışı (offline) çalışabilme yeteneği sayesinde her an erişilebilirdir.</p>
+        </div>
+
+        <div class="doc-section">
+            <h2>Sprint Planlayıcı (Kanban)</h2>
+            <p>Planlayıcı modülü, haftalık iş yükünü görsel olarak organize etmek için sürükle-bırak (Drag & Drop) özellikli bir Kanban panosuna ev sahipliği yapar.</p>
+            <ul>
+                <li><strong>Sürükle ve Bırak:</strong> Gün sütunlarını kendi aralarında yatay olarak kaydırarak dilediğiniz haftalık sıralamayı oluşturabilirsiniz. Kartları gün sütunları arasında dilediğiniz gibi taşıyabilirsiniz.</li>
+                <li><strong>Görsel Ekleme:</strong> Pano üzerine herhangi bir görseli panodan (Ctrl+V) yapıştırarak doğrudan kart oluşturabilirsiniz.</li>
+                <li><strong>Etiketleme Sistemi:</strong> İşin aşamasını belirten teknik etiketler (Merge Plan, Review, Test) kart üzerine tek tıkla eklenebilir ve bu etiketler algoritmalar tarafından otomatik renk kodlamasına tabi tutulur.</li>
+            </ul>
+        </div>
+
+        <div class="doc-section">
+            <h2>Görüntü İşleme (OCR) ve Akıllı Eşleştirme</h2>
+            <p>Sistemin en güçlü özelliklerinden biri, tarayıcı içinde çalışan yapay zeka destekli metin tanıma (OCR) modülüdür. Tesseract.js altyapısı ile panoya eklenen her görsel anında analiz edilir.</p>
+            <div class="highlight-box">
+                <p><strong>Akıllı Kopya Tespiti:</strong> Eklenen bir görselden tespit edilen "Madde ID" (Örn: NV-2558) sistemde daha önce var ise, sistem sizi anında uyarır ve eski kartı kırmızı renkle işaretler. Yeni eklenen kart otomatik olarak "Kopya 2/2" şeklinde mühürlenir.</p>
+            </div>
+            <p>Bu özellik, Efor Tahmini sayfasındaki veriler ile Planlayıcı sayfasındaki verilerin raporlar modülünde kusursuz bir şekilde birleşmesini sağlar.</p>
+        </div>
+
+        <div class="doc-section">
+            <h2>Efor Tahmini</h2>
+            <p>Geliştirme, Test, İnceleme (Review) gibi tüm yazılım yaşam döngüsü aşamaları için tahmin edilen (Est) ve gerçekleşen (Act) efor saatlerinin girildiği detaylı matris ekranıdır.</p>
+            <ul>
+                <li>Yine görsel yapıştırma (Ctrl+V) ile OCR okuması desteklenir.</li>
+                <li>Görünmesini istemediğiniz aşama kolonlarını eksi (-) butonlarına basarak gizleyebilirsiniz.</li>
+                <li>Tüm tablo, "Sistem Dışı Dışa Aktar" seçeneklerine uygun şekilde tasarlanmıştır.</li>
+            </ul>
+        </div>
+
+        <div class="doc-section">
+            <h2>Raporlar ve Dashboard</h2>
+            <p>Panodaki tüm dağınık verilerin konsolide edilerek görselleştirildiği analiz merkezidir.</p>
+            <h3>Sprint Planlama Matrisi</h3>
+            <p>Hangi görevlerin hangi günlere planlandığını, görev üzerinde atanmış olan teknik etiketlerin (M, R, T vb.) durumlarıyla birlikte çapraz tabloda sunar. Kullanıcının planlayıcı tarafındaki gün sıralamasını baz alır.</p>
+            <h3>Efor Analiz Grafikleri</h3>
+            <p>En çok efor harcanan maddeleri Chart.js aracılığıyla çubuk grafiklerle sunar ve tahmin edilen vs gerçekleşen sapmalarını ana gösterge panelleriyle raporlar.</p>
+        </div>
+    </div>
+
+    <!-- Modern Footer -->
+    <div class="footer"></div>
+
+</body>
+</html>

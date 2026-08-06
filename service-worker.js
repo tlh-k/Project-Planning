@@ -1,9 +1,11 @@
-const CACHE_NAME = 'planner-cache-v3.2.0';
+const CACHE_NAME = 'planner-cache-v3.3.0';
 const urlsToCache = [
   './',
   './planlayici.html',
   './estimation.html',
   './raporlar.html',
+  './dokumantasyon.html',
+  './iletisim.html',
   './config.js',
   './manifest.json',
   './icon.svg'
