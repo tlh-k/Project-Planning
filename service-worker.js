@@ -1,8 +1,10 @@
-const CACHE_NAME = 'planner-cache-v1';
+const CACHE_NAME = 'planner-cache-v3.2.0';
 const urlsToCache = [
   './',
   './planlayici.html',
   './estimation.html',
+  './raporlar.html',
+  './config.js',
   './manifest.json',
   './icon.svg'
 ];
@@ -25,5 +27,20 @@ self.addEventListener('fetch', event => {
         }
         return fetch(event.request);
       })
+  );
+});
+
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
 });

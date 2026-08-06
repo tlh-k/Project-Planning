@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Firdevs Sprint Planlama</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="icon.svg">
     <meta name="theme-color" content="#ffffff">
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         
@@ -168,14 +169,19 @@
             flex-direction: column;
             transition: all 0.3s ease;
             min-height: 250px; 
-            width: calc(20% - 24px); 
-            min-width: 260px;
+            width: calc(16.666% - 24px); 
+            min-width: 250px;
+            flex-grow: 1;
             box-sizing: border-box;
             overflow: hidden;
         }
-        .day-column.active {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        .day-column.col-drag-over-left {
+            box-shadow: -4px 0 0 0 #3b82f6, 0 1px 3px 0 rgba(0,0,0,0.1) !important;
+            transform: scale(0.99);
+        }
+        .day-column.col-drag-over-right {
+            box-shadow: 4px 0 0 0 #3b82f6, 0 1px 3px 0 rgba(0,0,0,0.1) !important;
+            transform: scale(0.99);
         }
 
         /* GÜN BAŞLIKLARI VE GÜN TEMİZLE BUTONU */
@@ -280,6 +286,28 @@
             display: flex;
             border: 1px solid #f1f5f9;
         }
+        .task-id-input {
+            display: none;
+        }
+        .task-id-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #ffffff;
+        }
+        .ocr-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 20;
+            pointer-events: none;
+        }
         .task-card img {
             display: block;
             width: 100%;
@@ -296,8 +324,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(2px);
+            background: rgba(255, 255, 255, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -316,8 +343,7 @@
         }
 
         .task-card.completed img {
-            filter: grayscale(100%);
-            opacity: 0.6;
+            opacity: 0.85;
         }
         .task-card.completed .done-overlay {
             opacity: 1;
@@ -380,11 +406,12 @@
 
         .controls {
             position: absolute;
-            bottom: 8px;
-            left: 8px;
+            bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
-            flex-direction: column;
-            gap: 4px;
+            flex-direction: row;
+            gap: 6px;
             opacity: 0;
             z-index: 10;
             transition: opacity 0.2s;
@@ -392,20 +419,25 @@
         .controls button {
             background: rgba(255, 255, 255, 0.95);
             border: 1px solid #e2e8f0;
-            padding: 4px 8px;
-            border-radius: 6px;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            padding: 0;
             font-size: 10px;
             cursor: pointer;
             color: #475569;
-            font-weight: 600;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-weight: 800;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
             transition: all 0.2s ease;
-            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .controls button:hover {
             background: #f8fafc;
             color: #0f172a;
-            border-color: #cbd5e1;
+            border-color: #94a3b8;
+            transform: scale(1.1);
         }
 
         .task-card:hover .action-btn,
@@ -433,6 +465,7 @@
     <div class="navbar">
         <a href="planlayici.html" class="nav-link active">Sprint Planlama</a>
         <a href="estimation.html" class="nav-link">Efor Tahmini</a>
+        <a href="raporlar.html" class="nav-link">Raporlar</a>
     </div>
 
     <div class="content-area">
@@ -460,18 +493,24 @@
     </div>
 
     <!-- COPYRIGHT ALANI -->
-    <div class="footer">
-        &copy; 2026 KYazılım - Sürüm v1.13
-    </div>
+    <div class="footer"></div>
     </div> <!-- end content-area -->
 
     <script>
-        const days = ["Cumartesi", "Pazartesi", "Salı", "Çarşamba", "Perşembe"];
+        let days = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+        const normalOrder = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
         let activeDayId = null;
         let draggedCard = null;
+        let draggedColumnId = null;
 
         function init() {
             const board = document.getElementById('planner-board');
+            board.innerHTML = '';
+            
+            const savedOrder = localStorage.getItem('haftalik_plan_gun_sirasi_v1');
+            if (savedOrder) {
+                try { days = JSON.parse(savedOrder); } catch(e) {}
+            }
             
             days.forEach(day => {
                 const dayId = day.toLowerCase().replace("ç", "c").replace("ş", "s");
@@ -480,7 +519,8 @@
                 dayEl.id = `col-${dayId}`;
                 
                 dayEl.innerHTML = `
-                    <div class="day-header" onclick="setActiveDay('${dayId}')">
+                    <div class="day-header" draggable="true" onclick="setActiveDay('${dayId}')">
+                        <span class="drag-handle" title="Kolonu Taşımak İçin Sürükle" style="cursor: grab; margin-right: 5px; color: #94a3b8; font-size: 16px;">⣿</span>
                         ${day}
                         <button class="clear-day-btn" onclick="clearDay('${dayId}', event)" title="${day} gününü temizle">Temizle</button>
                     </div>
@@ -489,10 +529,56 @@
                 board.appendChild(dayEl);
 
                 const listEl = document.getElementById(`list-${dayId}`);
+                const headerEl = dayEl.querySelector('.day-header');
                 
+                // Column drag events
+                headerEl.addEventListener('dragstart', e => {
+                    draggedColumnId = dayId;
+                    e.dataTransfer.effectAllowed = 'move';
+                    setTimeout(() => dayEl.style.opacity = '0.4', 0);
+                });
+                headerEl.addEventListener('dragend', e => {
+                    dayEl.style.opacity = '1';
+                    draggedColumnId = null;
+                    document.querySelectorAll('.day-column').forEach(col => {
+                        col.classList.remove('col-drag-over-left', 'col-drag-over-right');
+                    });
+                });
+                
+                dayEl.addEventListener('dragover', e => {
+                    if (draggedColumnId && draggedColumnId !== dayId) {
+                        e.preventDefault();
+                        const rect = dayEl.getBoundingClientRect();
+                        const midPoint = rect.left + rect.width / 2;
+                        dayEl.classList.remove('col-drag-over-left', 'col-drag-over-right');
+                        if (e.clientX < midPoint) {
+                            dayEl.classList.add('col-drag-over-left');
+                        } else {
+                            dayEl.classList.add('col-drag-over-right');
+                        }
+                    }
+                });
+                dayEl.addEventListener('dragleave', e => {
+                    if (draggedColumnId) {
+                        dayEl.classList.remove('col-drag-over-left', 'col-drag-over-right');
+                    }
+                });
+                dayEl.addEventListener('drop', e => {
+                    if (draggedColumnId && draggedColumnId !== dayId) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const isLeft = dayEl.classList.contains('col-drag-over-left');
+                        dayEl.classList.remove('col-drag-over-left', 'col-drag-over-right');
+                        handleColumnDrop(draggedColumnId, dayId, isLeft);
+                    }
+                });
+
+                // Task drag events
                 listEl.addEventListener('dragover', e => {
-                    e.preventDefault(); 
-                    listEl.classList.add('drag-over');
+                    if (!draggedColumnId) {
+                        e.preventDefault(); 
+                        listEl.classList.add('drag-over');
+                    }
                 });
                 
                 listEl.addEventListener('dragleave', () => {
@@ -500,19 +586,59 @@
                 });
                 
                 listEl.addEventListener('drop', e => {
-                    e.preventDefault();
-                    listEl.classList.remove('drag-over');
-                    if (draggedCard) {
-                        listEl.appendChild(draggedCard); 
-                        saveData(); 
-                        updateProgressBar(); 
+                    if (!draggedColumnId) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        listEl.classList.remove('drag-over');
+                        if (draggedCard) {
+                            listEl.appendChild(draggedCard); 
+                            saveData(); 
+                            updateProgressBar(); 
+                        }
                     }
                 });
             });
 
-            setActiveDay('cumartesi');
+            setActiveDay('cuma');
             loadData();
             window.addEventListener('paste', handlePaste);
+        }
+
+        function handleColumnDrop(sourceId, targetId, isLeft) {
+            const board = document.getElementById('planner-board');
+            const sourceCol = document.getElementById(`col-${sourceId}`);
+            const targetCol = document.getElementById(`col-${targetId}`);
+            
+            const originalNextSibling = sourceCol.nextElementSibling;
+
+            if (isLeft) {
+                targetCol.before(sourceCol);
+            } else {
+                targetCol.after(sourceCol);
+            }
+            
+            const newCols = Array.from(board.children);
+            const newOrder = newCols.map(c => {
+                const cId = c.id.replace('col-', '');
+                return normalOrder.find(d => d.toLowerCase().replace("ç", "c").replace("ş", "s") === cId);
+            });
+            
+            const doubleOrder = normalOrder.concat(normalOrder);
+            const isStrictOrder = doubleOrder.join(',').includes(newOrder.join(','));
+            
+            if (!isStrictOrder) {
+                if (!confirm("Gün sıralaması normal düzenin dışına çıkmaktadır, emin misiniz?")) {
+                    if (originalNextSibling) {
+                        originalNextSibling.before(sourceCol);
+                    } else {
+                        board.appendChild(sourceCol);
+                    }
+                    return;
+                }
+            }
+            
+            days = newOrder;
+            localStorage.setItem('haftalik_plan_gun_sirasi_v1', JSON.stringify(days));
         }
 
         function updateProgressBar() {
@@ -532,6 +658,69 @@
             const b = Math.round(255 - (255 - 218) * (percentage / 100));
             
             document.getElementById('main-header').style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+            highlightDuplicates();
+        }
+
+        function highlightDuplicates() {
+            const cards = Array.from(document.querySelectorAll('.task-card'));
+            
+            cards.forEach(card => {
+                card.style.border = '';
+                const badge = card.querySelector('.duplicate-badge');
+                if (badge) badge.remove();
+            });
+
+            const groups = {};
+            
+            cards.forEach(card => {
+                const idInput = card.querySelector('.task-id-input');
+                const taskId = idInput ? idInput.value : '';
+                const img = card.querySelector('img');
+                const imgSrc = (img && img.src) ? img.src : '';
+                
+                // Group by Task ID if available, otherwise fallback to image source
+                const key = taskId ? `ID:${taskId}` : `SRC:${imgSrc}`;
+                
+                if (key !== 'SRC:') {
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(card);
+                }
+            });
+
+            const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'];
+            let colorIndex = 0;
+
+            Object.values(groups).forEach(group => {
+                if (group.length > 1) {
+                    const color = colors[colorIndex % colors.length];
+                    group.forEach((card, idx) => {
+                        card.style.border = `2px solid ${color}`;
+                        
+                        const badge = document.createElement('div');
+                        badge.className = 'duplicate-badge';
+                        badge.style.cssText = `
+                            position: absolute;
+                            top: -8px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            background: ${color};
+                            color: white;
+                            font-size: 9px;
+                            font-weight: 700;
+                            padding: 2px 6px;
+                            border-radius: 12px;
+                            z-index: 10;
+                            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+                            pointer-events: none;
+                            white-space: nowrap;
+                        `;
+                        badge.innerText = `Kopya ${idx + 1}/${group.length}`;
+                        card.appendChild(badge);
+                    });
+                    colorIndex++;
+                }
+            });
         }
 
         function setActiveDay(dayId) {
@@ -576,9 +765,82 @@
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         compressImage(event.target.result, 800, function(compressedDataUrl) {
-                            createTaskCard(activeDayId, compressedDataUrl, [], false);
+                            const cardId = createTaskCard(activeDayId, compressedDataUrl, [], false, '');
                             saveData();
                             updateProgressBar(); 
+                            
+                            const card = document.getElementById(cardId);
+                            const imgWrapper = card.querySelector('.image-wrapper');
+                            const loader = document.createElement('div');
+                            loader.className = 'ocr-loading';
+                            loader.innerText = 'Okunuyor...';
+                            imgWrapper.appendChild(loader);
+
+                            Tesseract.recognize(compressedDataUrl, 'eng', {
+                                logger: m => {}
+                            }).then(({ data: { text } }) => {
+                                loader.remove();
+                                const match = text.match(/[A-Z]+-\d+/i);
+                                if (match) {
+                                    const newId = match[0].toUpperCase();
+                                    
+                                    // Check for existing tasks with same ID
+                                    const allCards = document.querySelectorAll('.task-card');
+                                    let exists = false;
+                                    const existingCards = [];
+                                    
+                                    allCards.forEach(c => {
+                                        if (c.id !== cardId) {
+                                            const idInput = c.querySelector('.task-id-input');
+                                            if (idInput && idInput.value === newId) {
+                                                exists = true;
+                                                existingCards.push(c);
+                                            }
+                                        }
+                                    });
+                                    
+                                    card.querySelector('.task-id-input').value = newId;
+                                    saveData();
+                                    updateProgressBar(); // Trigger duplicate highlighting
+                                    
+                                    if (exists) {
+                                        const originalStyles = existingCards.map(c => ({
+                                            card: c,
+                                            border: c.style.border,
+                                            boxShadow: c.style.boxShadow,
+                                            transform: c.style.transform
+                                        }));
+                                        
+                                        existingCards.forEach(c => {
+                                            c.style.transition = 'all 0.3s ease';
+                                            c.style.border = '4px solid #ef4444';
+                                            c.style.boxShadow = '0 0 25px rgba(239, 68, 68, 0.9)';
+                                            c.style.transform = 'scale(1.08)';
+                                            c.style.zIndex = '50';
+                                        });
+                                        
+                                        if (existingCards.length > 0) {
+                                            existingCards[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        }
+
+                                        setTimeout(() => {
+                                            alert(`Dikkat! Bu madde (${newId}) panoda zaten mevcut!`);
+                                            
+                                            originalStyles.forEach(({ card, border, boxShadow, transform }) => {
+                                                setTimeout(() => {
+                                                    card.style.border = border;
+                                                    card.style.boxShadow = boxShadow;
+                                                    card.style.transform = transform;
+                                                    card.style.zIndex = '';
+                                                }, 5000);
+                                            });
+                                        }, 400);
+                                    }
+                                }
+                            }).catch(err => {
+                                console.error('OCR Error:', err);
+                                loader.remove();
+                            });
                         });
                     };
                     reader.readAsDataURL(blob);
@@ -586,7 +848,7 @@
             }
         }
 
-        function createTaskCard(dayId, imgSrc, activeTags, isCompleted) {
+        function createTaskCard(dayId, imgSrc, activeTags, isCompleted, taskIdStr = '') {
             const list = document.getElementById(`list-${dayId}`);
             if(!list) return;
 
@@ -620,6 +882,7 @@
                 <button class="action-btn delete-btn" onclick="deleteCard('${cardId}')" title="Görevi Sil">✖</button>
                 
                 <div class="image-wrapper">
+                    <input type="text" class="task-id-input" value="${taskIdStr}" placeholder="ID" onchange="saveData()" />
                     <img src="${imgSrc}" alt="Task Image" />
                     
                     <div class="tags-container">
@@ -631,9 +894,9 @@
                     <div class="done-overlay"></div>
 
                     <div class="controls">
-                        <button onclick="toggleTag('${cardId}', 'merge-plan')">+ Merge Plan</button>
-                        <button onclick="toggleTag('${cardId}', 'review')">+ Review</button>
-                        <button onclick="toggleTag('${cardId}', 'test')">+ Test</button>
+                        <button onclick="toggleTag('${cardId}', 'merge-plan')" title="Merge Plan Ekle/Çıkar">M</button>
+                        <button onclick="toggleTag('${cardId}', 'review')" title="Review Ekle/Çıkar">R</button>
+                        <button onclick="toggleTag('${cardId}', 'test')" title="Test Ekle/Çıkar">T</button>
                     </div>
                 </div>
             `;
@@ -642,6 +905,7 @@
             if(!isCompleted) {
                 list.scrollTop = list.scrollHeight;
             }
+            return cardId;
         }
 
         function duplicateCard(cardId) {
@@ -651,8 +915,9 @@
             const list = card.closest('.task-list');
             const dayId = list.id.replace('list-', '');
             const imgSrc = card.querySelector('img').src;
+            const taskIdStr = card.querySelector('.task-id-input').value;
             
-            createTaskCard(dayId, imgSrc, [], false);
+            createTaskCard(dayId, imgSrc, [], false, taskIdStr);
             
             saveData();
             updateProgressBar();
@@ -695,19 +960,23 @@
                 cards.forEach(card => {
                     const imgSrc = card.querySelector('img').src;
                     const isCompleted = card.classList.contains('completed');
+                    const taskIdVal = card.querySelector('.task-id-input').value;
                     const tags = [];
                     if (card.querySelector('.tags-container span:nth-child(1)').classList.contains('merge-plan')) tags.push('merge-plan');
                     if (card.querySelector('.tags-container span:nth-child(2)').classList.contains('review')) tags.push('review');
                     if (card.querySelector('.tags-container span:nth-child(3)').classList.contains('test')) tags.push('test');
                     
-                    data[dayId].push({ image: imgSrc, tags: tags, completed: isCompleted });
+                    data[dayId].push({ image: imgSrc, tags: tags, completed: isCompleted, taskId: taskIdVal });
                 });
             });
-            localStorage.setItem('haftalik_plan_kanban_v13', JSON.stringify(data));
+            localStorage.setItem('haftalik_plan_kanban_v2', JSON.stringify(data));
         }
 
         function loadData() {
-            let saved = localStorage.getItem('haftalik_plan_kanban_v13');
+            let saved = localStorage.getItem('haftalik_plan_kanban_v2');
+            if(!saved) {
+                saved = localStorage.getItem('haftalik_plan_kanban_v13'); 
+            }
             if(!saved) {
                 saved = localStorage.getItem('haftalik_plan_kanban_v12'); 
             }
@@ -718,7 +987,7 @@
                     const dayId = day.toLowerCase().replace("ç", "c").replace("ş", "s");
                     if (data[dayId]) {
                         data[dayId].forEach(task => {
-                            createTaskCard(dayId, task.image, task.tags, task.completed || false);
+                            createTaskCard(dayId, task.image, task.tags, task.completed || false, task.taskId || '');
                         });
                     }
                 });

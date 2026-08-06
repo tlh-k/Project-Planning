@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netefor - Raporlar ve Dashboard</title>
+    <!-- Include Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="config.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            margin: 0;
+            padding: 0;
+            color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* NAVBAR (Consistent with other pages) */
+        .navbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 24px;
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            height: 60px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .nav-link {
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 15px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav-link:hover { color: #0f172a; }
+        .nav-link.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        /* MAIN CONTENT */
+        .content-area {
+            padding: 24px 32px;
+            flex: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0 0 24px 0;
+            color: #1e293b;
+        }
+
+        /* DASHBOARD GRID */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* WIDGET CARDS */
+        .widget {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+            border: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+        .widget:hover { transform: translateY(-2px); }
+
+        .widget-title {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .widget-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        
+        .widget-sub {
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .text-green { color: #10b981; }
+        .text-blue { color: #3b82f6; }
+        .text-orange { color: #f59e0b; }
+
+        /* CHARTS SECTION */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .chart-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+            border: 1px solid #f1f5f9;
+        }
+
+        .chart-header {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #1e293b;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+
+        /* MATRIX TABLE */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            min-width: 500px;
+        }
+        .matrix-table th, .matrix-table td {
+            border: 1px solid #e2e8f0;
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+        .matrix-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+        }
+        .matrix-table td {
+            color: #1e293b;
+            font-weight: 500;
+        }
+        .matrix-task-name {
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .tag-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            font-size: 9px;
+            font-weight: 800;
+            color: white;
+            margin-right: 4px;
+        }
+        .tag-badge.merge-plan { background-color: #3b82f6; }
+        .tag-badge.review { background-color: #10b981; }
+        .tag-badge.test { background-color: #f59e0b; }
+        .check-icon {
+            color: #94a3b8;
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .content-area { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="planlayici.html" class="nav-link">Sprint Planlama</a>
+        <a href="estimation.html" class="nav-link">Efor Tahmini</a>
+        <a href="raporlar.html" class="nav-link active">Raporlar</a>
+    </div>
+
+    <div class="content-area">
+        <h1 class="page-title">Sprint Raporu & Özet Panosu</h1>
+
+        <!-- WIDGETS -->
+        <div class="dashboard-grid">
+            <div class="widget">
+                <div class="widget-title">Toplam İş (Madde)</div>
+                <div class="widget-value" id="total-tasks">0</div>
+                <div class="widget-sub text-blue">Planlayıcıdaki tüm görevler</div>
+            </div>
+            <div class="widget">
+                <div class="widget-title">Tamamlanan İş</div>
+                <div class="widget-value" id="completed-tasks">0</div>
+                <div class="widget-sub text-green">Başarı Oranı: <span id="completion-rate">0%</span></div>
+            </div>
+            <div class="widget">
+                <div class="widget-title">Toplam Tahmini Efor</div>
+                <div class="widget-value" id="total-est">0.00 sa</div>
+                <div class="widget-sub text-orange">Sprint boyunca planlanan</div>
+            </div>
+            <div class="widget">
+                <div class="widget-title">Toplam Gerçekleşen Efor</div>
+                <div class="widget-value" id="total-act">0.00 sa</div>
+                <div class="widget-sub text-green" id="effort-diff-sub">Sapma Yok</div>
+            </div>
+        </div>
+
+        <!-- CHARTS & MATRICES -->
+        <div class="charts-grid">
+            <div class="chart-card" style="overflow-x: auto;">
+                <div class="chart-header">Sprint Planlama Matrisi</div>
+                <table class="matrix-table" id="scheduleMatrixTable">
+                    <thead>
+                        <tr id="matrix-header-row">
+                        </tr>
+                    </thead>
+                    <tbody id="matrix-body">
+                    </tbody>
+                </table>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">En Çok Efor Harcanan 5 Madde</div>
+                <div class="chart-container">
+                    <canvas id="topTasksChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAndRenderData();
+        });
+
+        function loadAndRenderData() {
+            let planData = {};
+            let estData = [];
+
+            try {
+                planData = JSON.parse(localStorage.getItem('haftalik_plan_kanban_v2')) || {};
+                estData = JSON.parse(localStorage.getItem('estimation_board_v2')) || [];
+            } catch (e) {
+                console.error("Data parse error", e);
+            }
+
+            // 1. Process Estimation Data per Task
+            const taskEfforts = {};
+            let totalEst = 0;
+            let totalAct = 0;
+
+            estData.forEach(row => {
+                let rowEst = 0;
+                let rowAct = 0;
+                const phases = ['dev', 'pretest', 'review', 'revrev', 'test', 'testrev', 'merge', 'mergerev'];
+                phases.forEach(p => {
+                    rowEst += parseFloat(row.estimates ? row.estimates[p] : 0) || 0;
+                    rowAct += parseFloat(row.actuals ? row.actuals[p] : 0) || 0;
+                });
+                
+                let tName = "İsimsiz Görev";
+                if (row.type === 'image') {
+                    tName = row.taskId || "İsimsiz Görev";
+                } else {
+                    tName = row.content ? row.content.trim() : "İsimsiz Görev";
+                }
+                
+                taskEfforts[tName] = { est: rowEst, act: rowAct };
+                totalEst += rowEst;
+                totalAct += rowAct;
+            });
+
+            // 2. Process Planner Data per Day
+            let days = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+            
+            // Kullanıcı gün sıralamasını değiştirmiş olabilir, oradan alalım
+            const savedOrder = localStorage.getItem('haftalik_plan_gun_sirasi_v1');
+            if (savedOrder) {
+                try { days = JSON.parse(savedOrder); } catch(e) {}
+            }
+
+            let totalTasks = 0;
+            let completedTasks = 0;
+            const scheduleMap = {};
+
+            days.forEach(dayName => {
+                const dayId = dayName.toLowerCase().replace("ç", "c").replace("ş", "s");
+                const tasks = planData[dayId] || [];
+
+                tasks.forEach(task => {
+                    totalTasks++;
+                    if (task.completed) completedTasks++;
+                    
+                    const taskName = (task.taskId || '').trim() || "İsimsiz Görev";
+                    
+                    if (!scheduleMap[taskName]) scheduleMap[taskName] = {};
+                    scheduleMap[taskName][dayId] = task.tags || [];
+                });
+            });
+
+            // 3. Update DOM Widgets
+            document.getElementById('total-tasks').innerText = totalTasks;
+            document.getElementById('completed-tasks').innerText = completedTasks;
+            document.getElementById('completion-rate').innerText = totalTasks > 0 ? Math.round((completedTasks/totalTasks)*100) + '%' : '0%';
+            
+            document.getElementById('total-est').innerText = formatTime(totalEst) + ' sa';
+            document.getElementById('total-act').innerText = formatTime(totalAct) + ' sa';
+            
+            const diff = totalAct - totalEst;
+            const diffEl = document.getElementById('effort-diff-sub');
+            if (diff > 0) {
+                diffEl.innerHTML = `Fark: <span style="color:#ef4444">+${formatTime(diff)} sa (Aşıldı)</span>`;
+            } else if (diff < 0) {
+                diffEl.innerHTML = `Fark: <span>${formatTime(diff)} sa (Kaldı)</span>`;
+            } else {
+                diffEl.innerHTML = `Sapma Yok`;
+            }
+
+            // 4. Render Matrix Table
+            const headerRow = document.getElementById('matrix-header-row');
+            headerRow.innerHTML = '<th>Madde (Task)</th>' + days.map(d => `<th>${d}</th>`).join('');
+            
+            const tbody = document.getElementById('matrix-body');
+            tbody.innerHTML = '';
+            
+            const taskNames = Object.keys(scheduleMap).sort();
+            if (taskNames.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${days.length + 1}" style="text-align: center; color: #64748b; padding: 20px;">Henüz plana eklenmiş madde yok.</td></tr>`;
+            } else {
+                taskNames.forEach(tName => {
+                    let tr = document.createElement('tr');
+                    let html = `<td class="matrix-task-name">${tName}</td>`;
+                    
+                    days.forEach(dayName => {
+                        const dayId = dayName.toLowerCase().replace("ç", "c").replace("ş", "s");
+                        const tags = scheduleMap[tName][dayId];
+                        let cellContent = '';
+                        if (tags) {
+                            if (tags.length === 0) {
+                                cellContent = `<span class="check-icon">✓</span>`;
+                            } else {
+                                if (tags.includes('merge-plan')) cellContent += '<span class="tag-badge merge-plan" title="Merge Plan">M</span>';
+                                if (tags.includes('review')) cellContent += '<span class="tag-badge review" title="Review">R</span>';
+                                if (tags.includes('test')) cellContent += '<span class="tag-badge test" title="Test">T</span>';
+                            }
+                        }
+                        html += `<td>${cellContent}</td>`;
+                    });
+                    tr.innerHTML = html;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // 5. Render Chart: Top Tasks
+            const sortedTasks = Object.keys(taskEfforts)
+                .map(t => ({ name: t, est: taskEfforts[t].est, act: taskEfforts[t].act, total: taskEfforts[t].est + taskEfforts[t].act }))
+                .filter(t => t.total > 0) // Hide zero effort tasks
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 5);
+
+            const topLabels = sortedTasks.map(t => t.name.length > 20 ? t.name.substring(0, 17) + '...' : t.name);
+            const topEst = sortedTasks.map(t => t.est);
+            const topAct = sortedTasks.map(t => t.act);
+
+            const ctxTop = document.getElementById('topTasksChart').getContext('2d');
+            new Chart(ctxTop, {
+                type: 'bar',
+                data: {
+                    labels: topLabels,
+                    datasets: [
+                        {
+                            label: 'Tahmini',
+                            data: topEst,
+                            backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Gerçek',
+                            data: topAct,
+                            backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y', // Horizontal bar chart
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { beginAtZero: true }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    // Show full title on hover
+                                    return sortedTasks[context[0].dataIndex].name;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Decimal to HH.MM converter matching the estimation.html logic for consistency
+        function formatTime(val) {
+            // Read user preference
+            const formatMode = localStorage.getItem('efor_format_mode') || 'decimal';
+            if (formatMode === 'decimal') {
+                return val.toFixed(2);
+            } else {
+                let isNeg = val < 0;
+                let absVal = Math.abs(val);
+                let hours = Math.floor(absVal);
+                let dec = absVal - hours;
+                let minutes = Math.round(dec * 100);
+                
+                if (minutes >= 60) {
+                    hours += Math.floor(minutes / 60);
+                    minutes = minutes % 60;
+                }
+                
+                let res = hours + "." + (minutes < 10 ? '0' : '') + minutes;
+                return isNeg ? "-" + res : res;
+            }
+        }
+    </script>
+</body>
+</html>

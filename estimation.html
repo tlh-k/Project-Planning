@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Efor Tahmini - PWA</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="icon.svg">
     <meta name="theme-color" content="#ffffff">
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         /* Import the same font */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -132,6 +133,20 @@
             border-radius: 6px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
+        .ocr-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 20;
+            pointer-events: none;
+        }
         .task-content textarea {
             width: 100%;
             min-height: 50px;
@@ -146,12 +161,17 @@
 
         .phase-cell {
             min-width: 120px;
+            background-color: #fafafa;
         }
 
         .input-group {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
+            background-color: #f8fafc;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
         }
 
         .input-group > div {
@@ -162,20 +182,21 @@
 
         .input-group input {
             width: 55px;
-            padding: 8px 4px 8px 8px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
+            padding: 8px 4px;
+            border: 1px solid #94a3b8;
+            border-radius: 6px;
             text-align: center;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
             font-family: inherit;
             color: #0f172a;
+            background-color: #ffffff;
             transition: all 0.2s ease;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
         }
 
         .input-group input:hover {
-            border-color: #94a3b8;
+            border-color: #64748b;
         }
         
         .input-group input:focus {
@@ -187,7 +208,7 @@
 
         .input-label {
             font-size: 11px;
-            color: #64748b;
+            color: #475569;
             display: block;
             margin-bottom: 4px;
             font-weight: 700;
@@ -221,12 +242,21 @@
         .badge-diff.negative { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
         .badge-label { font-weight: 600; opacity: 0.8; font-size: 10px; text-transform: uppercase;}
         
+        .value-text {
+            font-size: clamp(12px, 1.2vw, 15px);
+            font-weight: 800;
+        }
+        .gt-value {
+            font-size: clamp(14px, 1.5vw, 18px);
+            font-weight: 800;
+        }
+
         .phase-total-badge {
             display: inline-block;
-            font-size: 11px;
-            padding: 2px 6px;
+            font-size: clamp(12px, 1.2vw, 15px);
+            padding: 4px 8px;
             border-radius: 4px;
-            font-weight: 700;
+            font-weight: 800;
             margin: 1px;
         }
         .pt-est { background-color: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; }
@@ -239,6 +269,48 @@
         .footer-row td {
             font-size: 14px;
         }
+
+        table.hide-dev .col-dev .input-group, table.hide-dev .col-dev .col-title, table.hide-dev .col-dev .phase-total-badge { display: none !important; }
+        table.hide-pretest .col-pretest .input-group, table.hide-pretest .col-pretest .col-title, table.hide-pretest .col-pretest .phase-total-badge { display: none !important; }
+        table.hide-review .col-review .input-group, table.hide-review .col-review .col-title, table.hide-review .col-review .phase-total-badge { display: none !important; }
+        table.hide-revrev .col-revrev .input-group, table.hide-revrev .col-revrev .col-title, table.hide-revrev .col-revrev .phase-total-badge { display: none !important; }
+        table.hide-test .col-test .input-group, table.hide-test .col-test .col-title, table.hide-test .col-test .phase-total-badge { display: none !important; }
+        table.hide-testrev .col-testrev .input-group, table.hide-testrev .col-testrev .col-title, table.hide-testrev .col-testrev .phase-total-badge { display: none !important; }
+        table.hide-merge .col-merge .input-group, table.hide-merge .col-merge .col-title, table.hide-merge .col-merge .phase-total-badge { display: none !important; }
+        table.hide-mergerev .col-mergerev .input-group, table.hide-mergerev .col-mergerev .col-title, table.hide-mergerev .col-mergerev .phase-total-badge { display: none !important; }
+
+        table.hide-dev th.col-dev, table.hide-dev td.col-dev,
+        table.hide-pretest th.col-pretest, table.hide-pretest td.col-pretest,
+        table.hide-review th.col-review, table.hide-review td.col-review,
+        table.hide-revrev th.col-revrev, table.hide-revrev td.col-revrev,
+        table.hide-test th.col-test, table.hide-test td.col-test,
+        table.hide-testrev th.col-testrev, table.hide-testrev td.col-testrev,
+        table.hide-merge th.col-merge, table.hide-merge td.col-merge,
+        table.hide-mergerev th.col-mergerev, table.hide-mergerev td.col-mergerev { 
+            min-width: 40px; width: 40px; padding: 4px; 
+        }
+
+        .th-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .col-toggle-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #cbd5e1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            line-height: 1;
+            font-weight: 700;
+        }
+        .col-toggle-btn:hover { background: #e2e8f0; color: #475569; }
+
+        table[class*="hide-"] .th-content { justify-content: center; }
 
         .action-cell button {
             background: transparent;
@@ -270,6 +342,7 @@
     <div class="navbar">
         <a href="planlayici.html" class="nav-link">Sprint Planlama</a>
         <a href="estimation.html" class="nav-link active">Efor Tahmini</a>
+        <a href="raporlar.html" class="nav-link">Raporlar</a>
     </div>
 
     <div class="content-area">
@@ -285,20 +358,26 @@
             <b>İpucu:</b> Sayfada bir yere tıklayın ve ekran görüntüsü yapıştırmak için <b>Ctrl+V</b> tuşlarına basın. Her aşama için sol kutu Tahmini (Est), sağ kutu Gerçekleşen (Act) saattir.
         </p>
 
+        <div style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center; font-size: 13px; font-weight: 600; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <span style="color: #475569;">Hesaplama Formatı:</span>
+            <label style="cursor: pointer;"><input type="radio" name="formatMode" value="decimal" checked onchange="toggleFormatMode()"> Normal (Yüzdelik)</label>
+            <label style="cursor: pointer;"><input type="radio" name="formatMode" value="hm" onchange="toggleFormatMode()"> Saat.Dakika</label>
+        </div>
+
         <div class="table-container">
             <table id="estimationTable">
                 <thead>
                     <tr>
                         <th style="width:40px;">İşlem</th>
                         <th>Madde (Task)</th>
-                        <th>Development</th>
-                        <th>Pre-Test</th>
-                        <th>Review</th>
-                        <th>Rev. Revision</th>
-                        <th>Test</th>
-                        <th>Test Revision</th>
-                        <th>Merge Plan</th>
-                        <th>Merge Revision</th>
+                        <th class="col-dev"><div class="th-content"><span class="col-title">Development</span> <button class="col-toggle-btn" onclick="toggleCol('dev')" title="Gizle/Aç">&minus;</button></div></th>
+                        <th class="col-pretest"><div class="th-content"><span class="col-title">Local Test</span> <button class="col-toggle-btn" onclick="toggleCol('pretest')" title="Gizle/Aç">&minus;</button></div></th>
+                        <th class="col-review"><div class="th-content"><span class="col-title">Review</span> <button class="col-toggle-btn" onclick="toggleCol('review')" title="Gizle/Aç">&minus;</button></div></th>
+                        <th class="col-revrev"><div class="th-content"><span class="col-title">Rev. Revision</span> <button class="col-toggle-btn" onclick="toggleCol('revrev')" title="Gizle/Aç">&minus;</button></div></th>
+                        <th class="col-test"><div class="th-content"><span class="col-title">Analist Test</span> <button class="col-toggle-btn" onclick="toggleCol('test')" title="Gizle/Aç">&minus;</button></div></th>
+                        <th class="col-testrev"><div class="th-content"><span class="col-title">Test Revision</span> <button class="col-toggle-btn" onclick="toggleCol('testrev')" title="Gizle/Aç">&minus;</button></div></th>
+                        <th class="col-merge"><div class="th-content"><span class="col-title">Merge</span> <button class="col-toggle-btn" onclick="toggleCol('merge')" title="Gizle/Aç">&minus;</button></div></th>
+                        <th class="col-mergerev"><div class="th-content"><span class="col-title">Merge Revision</span> <button class="col-toggle-btn" onclick="toggleCol('mergerev')" title="Gizle/Aç">&minus;</button></div></th>
                         <th>Total Effort</th>
                     </tr>
                 </thead>
@@ -308,14 +387,14 @@
                 <tfoot>
                     <tr class="footer-row" id="footerRow">
                         <td colspan="2" style="text-align: right;">Genel Toplam:</td>
-                        <td id="gt-dev">-</td>
-                        <td id="gt-pretest">-</td>
-                        <td id="gt-review">-</td>
-                        <td id="gt-revrev">-</td>
-                        <td id="gt-test">-</td>
-                        <td id="gt-testrev">-</td>
-                        <td id="gt-merge">-</td>
-                        <td id="gt-mergerev">-</td>
+                        <td id="gt-dev" class="col-dev">-</td>
+                        <td id="gt-pretest" class="col-pretest">-</td>
+                        <td id="gt-review" class="col-review">-</td>
+                        <td id="gt-revrev" class="col-revrev">-</td>
+                        <td id="gt-test" class="col-test">-</td>
+                        <td id="gt-testrev" class="col-testrev">-</td>
+                        <td id="gt-merge" class="col-merge">-</td>
+                        <td id="gt-mergerev" class="col-mergerev">-</td>
                         <td id="gt-total">-</td>
                     </tr>
                 </tfoot>
@@ -323,20 +402,89 @@
         </div>
     </div>
     
-    <div class="footer">
-        &copy; 2026 KYazılım - Sürüm v1.13
-    </div>
+    <div class="footer"></div>
 
     <script>
         const phases = [
             'dev', 'pretest', 'review', 'revrev', 'test', 'testrev', 'merge', 'mergerev'
         ];
         let rowData = [];
+        let formatMode = 'decimal';
+
+        let hiddenColumns = [];
 
         function init() {
+            let savedFormat = localStorage.getItem('efor_format_mode');
+            if (savedFormat) formatMode = savedFormat;
+            let radio = document.querySelector(`input[name="formatMode"][value="${formatMode}"]`);
+            if (radio) radio.checked = true;
+
+            applyHiddenCols();
+
             loadData();
             window.addEventListener('paste', handlePaste);
             renderTable();
+        }
+
+        function toggleCol(colName) {
+            const table = document.getElementById('estimationTable');
+            const btn = document.querySelector(`.col-${colName} .col-toggle-btn`);
+            if (hiddenColumns.includes(colName)) {
+                hiddenColumns = hiddenColumns.filter(c => c !== colName);
+                table.classList.remove('hide-' + colName);
+                if (btn) btn.innerHTML = '&minus;';
+            } else {
+                hiddenColumns.push(colName);
+                table.classList.add('hide-' + colName);
+                if (btn) btn.innerHTML = '&plus;';
+            }
+            localStorage.setItem('efor_hidden_cols', JSON.stringify(hiddenColumns));
+        }
+
+        function applyHiddenCols() {
+            const saved = localStorage.getItem('efor_hidden_cols');
+            if (saved) {
+                hiddenColumns = JSON.parse(saved);
+                const table = document.getElementById('estimationTable');
+                hiddenColumns.forEach(col => {
+                    table.classList.add('hide-' + col);
+                    const btn = document.querySelector(`.col-${col} .col-toggle-btn`);
+                    if (btn) btn.innerHTML = '&plus;';
+                });
+            }
+        }
+
+        function toggleFormatMode() {
+            formatMode = document.querySelector('input[name="formatMode"]:checked').value;
+            localStorage.setItem('efor_format_mode', formatMode);
+            renderTable();
+        }
+
+        function parseTime(valStr) {
+            let val = parseFloat(valStr) || 0;
+            if (formatMode === 'hm' && valStr.toString().includes('.')) {
+                let parts = valStr.toString().split('.');
+                let h = parseInt(parts[0]) || 0;
+                let mStr = parts[1];
+                if (mStr.length === 1) mStr += '0';
+                let m = parseInt(mStr.substring(0, 2)) || 0; 
+                return h + (m / 60);
+            }
+            return val;
+        }
+
+        function formatTime(totalHours) {
+            if (formatMode === 'hm') {
+                let h = Math.floor(Math.abs(totalHours));
+                let m = Math.round((Math.abs(totalHours) - h) * 60);
+                if (m >= 60) {
+                    h += Math.floor(m / 60);
+                    m = m % 60;
+                }
+                let sign = totalHours < 0 ? '-' : '';
+                return sign + h + '.' + m.toString().padStart(2, '0');
+            }
+            return totalHours.toFixed(1);
         }
 
         function handlePaste(e) {
@@ -348,7 +496,32 @@
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         compressImage(event.target.result, 600, function(compressedDataUrl) {
-                            addRow('image', compressedDataUrl);
+                            const newRowId = addRow('image', compressedDataUrl);
+                            
+                            const tr = document.getElementById(newRowId);
+                            const imgWrapper = tr.querySelector('.task-content');
+                            
+                            if (imgWrapper) {
+                                imgWrapper.style.position = 'relative';
+                                const loader = document.createElement('div');
+                                loader.className = 'ocr-loading';
+                                loader.innerText = 'Okunuyor...';
+                                imgWrapper.appendChild(loader);
+
+                                Tesseract.recognize(compressedDataUrl, 'eng', { logger: m => {} }).then(({ data: { text } }) => {
+                                    loader.remove();
+                                    const match = text.match(/[A-Z]+-\d+/i);
+                                    if (match) {
+                                        const row = rowData.find(r => r.id === newRowId);
+                                        if(row) {
+                                            row.taskId = match[0].toUpperCase();
+                                            saveData();
+                                        }
+                                    }
+                                }).catch(err => { 
+                                    if(loader) loader.remove(); 
+                                });
+                            }
                         });
                     };
                     reader.readAsDataURL(blob);
@@ -394,6 +567,7 @@
             rowData.push(newRow);
             saveData();
             renderTable();
+            return newRow.id;
         }
 
         function deleteRow(id) {
@@ -432,6 +606,7 @@
 
             rowData.forEach(row => {
                 const tr = document.createElement('tr');
+                tr.id = row.id;
                 
                 // Action cell
                 let html = `<td class="action-cell"><button onclick="deleteRow('${row.id}')" title="Sil">✖</button></td>`;
@@ -453,22 +628,25 @@
                     const estVal = row.estimates[p] || '';
                     const actVal = row.actuals[p] || '';
                     
-                    rowEstTotal += parseFloat(estVal) || 0;
-                    rowActTotal += parseFloat(actVal) || 0;
+                    let pEst = parseTime(estVal);
+                    let pAct = parseTime(actVal);
+
+                    rowEstTotal += pEst;
+                    rowActTotal += pAct;
                     
-                    phaseTotals[p].est += parseFloat(estVal) || 0;
-                    phaseTotals[p].act += parseFloat(actVal) || 0;
+                    phaseTotals[p].est += pEst;
+                    phaseTotals[p].act += pAct;
 
                     html += `
-                    <td class="phase-cell">
+                    <td class="phase-cell col-${p}">
                         <div class="input-group">
                             <div>
                                 <span class="input-label">Est.</span>
-                                <input type="number" step="0.5" min="0" value="${estVal}" onchange="updateValue('${row.id}', '${p}', 'est', this.value)" />
+                                <input type="number" step="0.05" min="0" value="${estVal}" onchange="updateValue('${row.id}', '${p}', 'est', this.value)" />
                             </div>
                             <div>
                                 <span class="input-label">Act.</span>
-                                <input type="number" step="0.5" min="0" value="${actVal}" onchange="updateValue('${row.id}', '${p}', 'act', this.value)" />
+                                <input type="number" step="0.05" min="0" value="${actVal}" onchange="updateValue('${row.id}', '${p}', 'act', this.value)" />
                             </div>
                         </div>
                     </td>`;
@@ -476,25 +654,26 @@
 
                 // Total cell
                 const diff = rowActTotal - rowEstTotal;
-                const diffClass = diff > 0 ? 'diff negative' : 'diff';
-                const diffSign = diff > 0 ? '+' : '';
                 
                 grandTotals.est += rowEstTotal;
                 grandTotals.act += rowActTotal;
 
+                let formattedDiff = formatTime(diff);
+                if (diff > 0 && !formattedDiff.startsWith('+')) formattedDiff = '+' + formattedDiff;
+
                 html += `
                 <td class="total-cell">
                     <div class="effort-badge badge-est">
-                        <span class="badge-label">Tahmin</span>
-                        <span>${rowEstTotal.toFixed(1)}</span>
+                        <span class="badge-label">Tah.</span>
+                        <span class="value-text">${formatTime(rowEstTotal)}</span>
                     </div>
                     <div class="effort-badge badge-act">
-                        <span class="badge-label">Gerçekleşen</span>
-                        <span>${rowActTotal.toFixed(1)}</span>
+                        <span class="badge-label">Ger.</span>
+                        <span class="value-text">${formatTime(rowActTotal)}</span>
                     </div>
                     <div class="effort-badge badge-diff ${diff > 0 ? 'negative' : ''}">
                         <span class="badge-label">Fark</span>
-                        <span>${diffSign}${diff.toFixed(1)}</span>
+                        <span class="value-text">${formattedDiff}</span>
                     </div>
                 </td>`;
                 
@@ -506,35 +685,38 @@
             phases.forEach(p => {
                 const td = document.getElementById(`gt-${p}`);
                 td.innerHTML = `
-                    <div class="phase-total-badge pt-est" title="Tahmini">${phaseTotals[p].est.toFixed(1)}</div>
-                    <div class="phase-total-badge pt-act" title="Gerçekleşen">${phaseTotals[p].act.toFixed(1)}</div>
+                    <div class="phase-total-badge pt-est" title="Tahmini">${formatTime(phaseTotals[p].est)}</div>
+                    <div class="phase-total-badge pt-act" title="Gerçekleşen">${formatTime(phaseTotals[p].act)}</div>
                 `;
             });
             
             const gDiff = grandTotals.act - grandTotals.est;
-            const gDiffSign = gDiff > 0 ? '+' : '';
+            let formattedGDiff = formatTime(gDiff);
+            if (gDiff > 0 && !formattedGDiff.startsWith('+')) formattedGDiff = '+' + formattedGDiff;
+
             document.getElementById('gt-total').innerHTML = `
                 <div class="effort-badge badge-est">
-                    <span class="badge-label">T.Tahmin</span>
-                    <span>${grandTotals.est.toFixed(1)}</span>
+                    <span class="badge-label">Tah.</span>
+                    <span class="gt-value">${formatTime(grandTotals.est)}</span>
                 </div>
                 <div class="effort-badge badge-act">
-                    <span class="badge-label">T.Gerçek</span>
-                    <span>${grandTotals.act.toFixed(1)}</span>
+                    <span class="badge-label">Ger.</span>
+                    <span class="gt-value">${formatTime(grandTotals.act)}</span>
                 </div>
                 <div class="effort-badge badge-diff ${gDiff > 0 ? 'negative' : ''}">
-                    <span class="badge-label">G.Fark</span>
-                    <span>${gDiffSign}${gDiff.toFixed(1)}</span>
+                    <span class="badge-label">Fark</span>
+                    <span class="gt-value">${formattedGDiff}</span>
                 </div>
             `;
         }
 
         function saveData() {
-            localStorage.setItem('estimation_board_v1', JSON.stringify(rowData));
+            localStorage.setItem('estimation_board_v2', JSON.stringify(rowData));
         }
 
         function loadData() {
-            const saved = localStorage.getItem('estimation_board_v1');
+            let saved = localStorage.getItem('estimation_board_v2');
+            if(!saved) saved = localStorage.getItem('estimation_board_v1');
             if(saved) {
                 rowData = JSON.parse(saved);
             }
